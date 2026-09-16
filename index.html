@@ -1,0 +1,599 @@
+!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>800x480 문자열 전자잉크 데일리 공지사항 생성기</title>
+<link rel="stylesheet" as="style" crossorigin href=" https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css " />
+<link rel="stylesheet" href=" https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css " />
+<script src=" https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js "></script>
+<스타일>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+몸 {
+배경색: #1f242d;
+색상: #ffffff;
+글꼴 패밀리: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+표시: 플렉스;
+플렉스 방향: 컬럼;
+항목 정렬: 가운데 정렬;
+최소 높이: 100vh;
+패딩: 24px 15px 50px 15px;
+}
+.header-title {
+하단 여백: 16px;
+글꼴 크기: 22px;
+글꼴 두께: 800;
+색상: #f3f4f6;
+표시: 플렉스;
+항목 정렬: 가운데 정렬;
+간격: 10px;
+}
+.액션바 {
+하단 여백: 8px;
+표시: 플렉스;
+간격: 10px;
+플렉스랩: 랩;
+콘텐츠 정렬: 가운데 정렬;
+항목 정렬: 가운데 정렬;
+}
+.btn {
+배경: #ffffff;
+색상: #111111;
+테두리: 2px 솔리드 #000000;
+패딩: 11px 22px;
+글꼴 크기: 15px;
+글꼴 두께: 800;
+테두리 반경: 8px;
+커서: 포인터;
+표시: 인라인-플렉스;
+항목 정렬: 가운데 정렬;
+간격: 8px;
+전환: 모든 0.15초 완화;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.btn:hover { background: #e5e7eb; transform: translateY(-1px); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-download { background: #10b981; color: #ffffff; border: 2px solid #059669; }
+.btn-download:hover { background: #059669; }
+.btn-date { background: #3b82f6; color: #ffffff; border: 2px solid #2563eb; }
+.btn-date:hover { background: #2563eb; }
+.btn-date2 { background: #8b5cf6; color: #ffffff; border: 2px solid #7c3aed; }
+.btn-date2:hover { background: #7c3aed; }
+.상태-메시지 {
+하단 여백: 10px;
+글꼴 크기: 13px;
+글꼴 두께: 700;
+최소 높이: 18px;
+색상: #9ca3af;
+표시: 플렉스;
+항목 정렬: 가운데 정렬;
+간격: 6px;
+텍스트 정렬: 가운데 정렬;
+}
+.status-msg.ok { color: #34d399; }
+.status-msg.error { color: #f87171; }
+.status-msg.loading { color: #fbbf24; }
+#weatherStatusMsg { margin-bottom: 8px; }
+#downloadStatusMsg { margin-bottom: 18px; }
+
+.eink-frame {
+너비: 800px;
+높이: 480px;
+최소 너비: 800px;
+최소 높이: 480px;
+최대 너비: 800px;
+최대 높이: 480px;
+배경색: #ffffff;
+색상: #000000;
+위치: 상대적;
+box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+테두리: 4px 솔리드 #000000;
+표시: 플렉스;
+플렉스 방향: 컬럼;
+오버플로우: 숨김;
+사용자 선택: 없음;
+}
+.헤더-섹션 {
+표시: 플렉스;
+높이: 115px;
+플렉스: 0 0 115px;
+border-bottom: 4px solid #000000;
+배경색: #ffffff;
+}
+
+/* [수정] 고정 400px 대신 공용(flex:1 1 0)로 변경 → 하단 공지 섹션의 Grid(1fr 1fr)와 같은 방식이 되어 중앙 세로 구분선이 대신 일직선으로 비교짐 */
+.date-box {
+플렉스: 1 1 0;
+최소 너비: 0;
+표시: 플렉스;
+플렉스 방향: 컬럼;
+콘텐츠 정렬: 가운데 정렬;
+왼쪽 패딩: 24px;
+border-right: 4px solid #000000;
+}
+
+.weather-box {
+플렉스: 1 1 0;
+최소 너비: 0;
+표시: 플렉스;
+항목 정렬: 가운데 정렬;
+justify-content: space-between;
+패딩: 0 20px;
+}
+
+.날짜배지 {
+글꼴 크기: 13px;
+글꼴 두께: 800;
+글자 간격: 1.5px;
+텍스트 변환: 대문자;
+색상: #000000;
+하단 여백: 4px;
+}
+.date-text { font-size: 38px; font-weight: 900; letter-spacing: -0.8px; line-height: 1.1; }
+.weather-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.weather-icon { font-size: 54px; color: #000000; width: 60px; text-align: center; flex-shrink: 0; }
+.weather-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.weather-loc { font-size: 22px; font-weight: 800; color: #222222; letter-spacing: -0.5px; }
+.weather-status { font-size: 42px; font-weight: 900; letter-spacing: -1px; line-height: 1.05; }
+.날씨온도 {
+텍스트 정렬: 왼쪽;
+정렬 항목: flex-start;
+border-left: 3px solid #000000;
+왼쪽 패딩: 14px;
+표시: 플렉스;
+플렉스 방향: 컬럼;
+간격: 4px;
+콘텐츠 정렬: 가운데 정렬;
+플렉스-슈링크: 0;
+}
+.weather-temp .temp-line { font-size: 34px; font-weight: 900; line-height: 1.05; letter-spacing: -0.8px; color: #000000; text-align: left; }
+
+.notice-section {
+플렉스: 1 1 자동;
+표시: 그리드;
+그리드 템플릿 열: 1fr 1fr;
+그리드 템플릿 행: 1fr 1fr;
+배경색: #000000;
+최소 높이: 0;
+}
+.공지 카드 {
+배경색: #ffffff;
+패딩: 12px 20px;
+표시: 플렉스;
+플렉스 방향: 컬럼;
+justify-content: flex-start;
+border-right: 4px solid #000000;
+border-bottom: 4px solid #000000;
+오버플로우: 숨김;
+최소 높이: 0;
+}
+.notice-card:nth-child(2n) { border-right: none; }
+.notice-card:nth-child(3),
+.notice-card:nth-child(4) { border-bottom: none; }
+.카드-헤더 {
+표시: 플렉스;
+항목 정렬: 가운데 정렬;
+간격: 12px;
+하단 여백: 8px;
+플렉스: 0 0 자동;
+}
+.카드-아이콘 {
+너비: 44px;
+높이: 44px;
+배경: #000000;
+색상: #ffffff;
+테두리 반경: 6px;
+표시: 플렉스;
+항목 정렬: 가운데 정렬;
+콘텐츠 정렬: 가운데 정렬;
+글꼴 크기: 24px;
+플렉스-슈링크: 0;
+}
+.card-title { font-size: 32px; font-weight: 900; letter-spacing: -1.2px; color: #000000; line-height: 1.1; }
+
+.카드-바디 {
+플렉스: 1 1 자동;
+최소 높이: 0;
+오버플로우: 숨김;
+표시: 플렉스;
+정렬 항목: flex-start;
+}
+.카드-콘텐츠 {
+너비: 100%;
+글꼴 두께: 900;
+색상: #000000;
+줄 높이: 1.15;
+왼쪽 패딩: 56px;
+단어 구분: 전체 유지;
+오버플로우 줄 바꿈: 단어 끊기;
+글자 간격: -1.1px;
+배경: 투명;
+글꼴 크기: 56px;
+}
+
+.editor-container {
+너비: 800px;
+배경: #ffffff;
+색상: #111111;
+상단 여백: 24px;
+패딩: 22px;
+테두리 반경: 12px;
+표시: 플렉스;
+플렉스 방향: 컬럼;
+간격: 16px;
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.editor-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+.editor-title { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.save-indicator { font-size: 13px; font-weight: 700; color: #059669; display: flex; align-items: center; gap: 5px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 13px; font-weight: 700; color: #374151; }
+.form-group 입력, .form-group 선택 {
+패딩: 10px 12px;
+테두리: 1.5px 솔리드 #d1d5db;
+테두리 반경: 6px;
+글꼴 크기: 15px;
+글꼴 패밀리: 상속됨;
+글꼴 두께: 600;
+배경색: #f9fafb;
+}
+.form-group input:focus, .form-group select:focus { outline: none; border-color: #000000; background-color: #ffffff; }
+</style>
+</head>
+본문>
+<div class="header-title">
+<i class="fa-solid fa-tablet-screen-button"></i> 800×480 E-Ink 데일리 공지관리기
+</div>
+<div class="action-bar">
+<button class="btn btn-download" id="btnDownload" >
+<i class="fa-solid fa-download"></i> 800×480 코일 PNG 다운로드
+</버튼>
+<button class="btn btn-date" id="btnTodayWeather" >
+<i class="fa-solid fa-cloud-sun"></i> 오늘 날짜+날씨 불러오기
+</버튼>
+<button class="btn btn-date2" id="btnTomorrowWeather" >
+<i class="fa-regular fa-calendar-plus"></i> 내일 데이트+날씨 불러오기
+</버튼>
+<button class="btn">
+<i class="fa-solid fa-rotate-left"></i> 제가 그랬어요
+</버튼>
+</div>
+<div class="status-msg" id="weatherStatusMsg"></div>
+<div class="status-msg" id="downloadStatusMsg"></div>
+
+<div class="eink-frame" id="einkDisplay">
+<header class="header-section">
+<div class="date-box">
+<span class="date-badge"><i class="fa-regular fa-calendar"></i> 일일 공지</span>
+<div class="date-text" id="dispDate">9월 16일 관찰</div>
+</div>
+<div class="weather-box">
+<div class="weather-left">
+<i class="fa-solid fa-sun weather-icon" id="dispWeatherIcon"></i>
+<div class="날씨 정보">
+<span class="weather-loc">경기도 광명시</span>
+<span class="weather-status" id="dispWeatherText">맑음</span>
+</div>
+</div>
+<div class="날씨-온도">
+<div class="temp-line" id="dispHighest">최고 28°</div>
+<div class="temp-line" id="dispLowest">최저 16°</div>
+</div>
+</div>
+</헤더>
+<main class="notice-section">
+<div class="notice-card">
+<div class="card-header">
+<div class="card-icon"><i class="fa-solid fa-shirt"></i></div>
+<span class="card-title">어린이집 의상</span>
+</div>
+<div class="card-body"><div class="card-content" id="dispUniform">원복</div></div>
+</div>
+<div class="notice-card">
+<div class="card-header">
+<div class="card-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+<span class="card-title">준비물</span>
+</div>
+<div class="card-body"><div class="card-content" id="dispSupplies">없음</div></div>
+</div>
+<div class="notice-card">
+<div class="card-header">
+<div class="card-icon"><i class="fa-solid fa-utensils"></i></div>
+<span class="card-title">아침메뉴</span>
+</div>
+<div class="card-body"><div class="card-content" id="dispBreakfast">요거트, 과일, 육전, 칼빵</div></div>
+</div>
+<div class="notice-card">
+<div class="card-header">
+<div class="card-icon"><i class="fa-solid fa-bullhorn"></i></div>
+<span class="card-title">기타 공지</span>
+</div>
+<div class="card-body"><div class="card-content" id="dispEtc">없음</div></div>
+</div>
+</main>
+</div>
+
+<div class="editor-container">
+<div class="editor-header">
+<div class="editor-title">
+<i class="fa-solid fa-pen-to-square"></i> 매일 공지사항 폼
+</div>
+<div class="저장 표시기">
+<i class="fa-solid fa-floppy-disk"></i> 브라우저 자동 저장 활성화됨
+</div>
+</div>
+<div class="form-grid">
+<div class="form-group">
+<label for="inputDate">날짜 표기</label>
+<input type="text" id="inputDate" value="9월 16일 관찰" >
+</div>
+<div class="form-group">
+<label for="inputWeather">날씨 상태 (자동 접수 또는 수동 선택)</label>
+<select id="inputWeather">
+<option value="맑음" 선택됨>맑음</option>
+<option value="구름많음">구름많음</option>
+<option value="흐림">흐림</option>
+<option value="비">비</option>
+<옵션 값="눈">눈</option>
+</select>
+</div>
+<div class="form-group">
+<label for="inputHighest">최고 기온</label>
+<input type="text" id="inputHighest" value="28°">
+</div>
+<div class="form-group">
+<label for="inputLowest">최저 기온</label>
+<input type="text" id="inputLowest" value="16°">
+</div>
+<div class="form-group">
+<label for="inputUniform">1. 어린이집 의상</label>
+<input type="text" id="inputUniform" value="원복">
+</div>
+<div class="form-group">
+<label for="inputSupplies">2. 준비물</label>
+<input type="text" id="inputSupplies" value="없음">
+</div>
+<div class="form-group" style="grid-column: span 2;">
+<label for="inputBreakfast">3. 아침메뉴</label>
+<input type="text" id="inputBreakfast" value="요거트, 과일, 육전, 칼빵" >
+</div>
+<div class="form-group" style="grid-column: span 2;">
+<label for="inputEtc">4. 기타 공지</label>
+<input type="text" id="inputEtc" value="없음">
+</div>
+</div>
+</div>
+
+<script>
+const STORAGE_KEY = 'eink_daily_notice_data_v1';
+const GWANGMYEONG_LAT = 37.4786;
+const GWANGMYEONG_LON = 126.8664;
+
+function fitTextToBox(contentEl, minFont = 18, maxFont = 56, step = 1) {
+const box = contentEl.parentElement;
+글꼴 크기를 maxFont로 설정합니다.
+contentEl.style.fontSize = fontSize + 'px';
+
+가드를 0으로 설정하세요;
+하는 동안 (
+글꼴 크기 > 최소 글꼴 &&
+가드 < 80 &&
+(contentEl.scrollHeight > box.clientHeight + 1 ||
+contentEl.scrollWidth > box.clientWidth + 1)
+) {
+글꼴 크기 -= 단계;
+contentEl.style.fontSize = fontSize + 'px';
+가드++;
+}
+}
+
+function fitAllCards() {
+fitTextToBox(document.getElementById('dispUniform'));
+fitTextToBox(document.getElementById('dispSupplies'));
+fitTextToBox(document.getElementById('dispBreakfast'));
+fitTextToBox(document.getElementById('dispEtc'));
+}
+
+onDataChanged() 함수 {
+updateDisplay();
+saveToStorage();
+}
+
+function updateDisplay() {
+document.getElementById('dispDate').innerText = document.getElementById('inputDate').value;
+
+const weatherVal = document.getElementById('inputWeather').value;
+const iconEl = document.getElementById('dispWeatherIcon');
+날씨 값에 '비'가 포함되어 있으면 {
+iconEl.className = 'fa-solid fa-cloud-showers-heavy weather-icon';
+} else if (weatherVal.includes('구름') || WeatherVal.includes('흐림')) {
+iconEl.className = 'fa-solid fa-cloud weather-icon';
+} 그렇지 않고 날씨 값에 '눈'이 포함되어 있으면 {
+iconEl.className = 'fa-solid fa-snowflake weather-icon';
+} 또 다른 {
+iconEl.className = 'fa-solid fa-sun weather-icon';
+}
+document.getElementById('dispWeatherText').innerText = weatherVal;
+
+let hi = document.getElementById('inputHighest').value.replace('최고', '').trim();
+let lo = document.getElementById('inputLowest').value.replace('최저', '').trim();
+hi에 '°'가 포함되어 있지 않으면 hi를 '°'로 추가합니다.
+lo에 '°'가 포함되어 있지 않으면 lo에 '°'를 추가합니다.
+document.getElementById('dispHighest').innerText = "최고 " + hi;
+document.getElementById('dispLowest').innerText = "최저 " + lo;
+
+document.getElementById('dispUniform').innerText = document.getElementById('inputUniform').value;
+document.getElementById('dispSupplies').innerText = document.getElementById('inputSupplies').value;
+document.getElementById('dispBreakfast').innerText = document.getElementById('inputBreakfast').value;
+document.getElementById('dispEtc').innerText = document.getElementById('inputEtc').value;
+
+fitAllCards();
+}
+
+함수 saveToStorage() {
+const data = {
+날짜: document.getElementById('inputDate').value,
+날씨: document.getElementById('inputWeather').value,
+최고값: document.getElementById('inputHighest').value,
+가장 낮은 값: document.getElementById('inputLowest').value,
+유니폼: document.getElementById('inputUniform').value,
+공급품: document.getElementById('inputSupplies').value,
+아침 식사: document.getElementById('inputBreakfast').value,
+기타: document.getElementById('inputEtc').value
+};
+try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+function loadFromStorage() {
+노력하다 {
+const saved = localStorage.getItem(STORAGE_KEY);
+저장되었다면 {
+const data = JSON.parse(saved);
+만약 data.date가 있다면 document.getElementById('inputDate').value에 data.date를 할당합니다.
+만약 data.weather가 document.getElementById('inputWeather').value와 같은 날씨 입력 필드라면,
+만약 data.highest가 맞다면 document.getElementById('inputHighest').value를 data.highest로 설정합니다.
+만약 데이터가 가장 낮으면 document.getElementById('inputLowest').value = data.lowest;
+만약 data.uniform이 맞다면 document.getElementById('inputUniform').value)를 data.uniform으로 설정합니다.
+만약 data.supplies가 있다면 document.getElementById('inputSupplies').value가 data.supplies와 같습니다.
+만약 data.breakfast가 맞다면 document.getElementById('inputBreakfast').value에 data.breakfast를 할당합니다.
+만약 data.etc이면 document.getElementById('inputEtc').value가 data.etc입니다.
+}
+} catch (e) {}
+}
+
+함수 getFormattedDate(offsetDays) {
+const now = new Date();
+const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays);
+const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+const month = target.getMonth() + 1;
+const date = target.getDate();
+const dayName = days[target.getDay()];
+return `${월}월 ${date}일 ${dayName}`;
+}
+
+function mapWeatherCode(code) {
+if (코드 === 0 || 코드 === 1 || 코드 === 2) return '맑음';
+if (코드 === 3) return '구름많음';
+if (코드 === 45 || 코드 === 48) return '흐림';
+만약 ([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code))이면 '비'를 반환합니다.
+만약 ([71,73,75,77,85,86]에 코드(code)가 포함되어 있다면) '눈'을 반환합니다.
+반환 '흐림';
+}
+
+함수 setStatusMsg(elId, text, type) {
+const el = document.getElementById(elId);
+el.innerText = 텍스트;
+el.className = 'status-msg' + (type ? ' ' + type : '');
+}
+함수 setWeatherButtonsDisabled(disabled) {
+document.getElementById('btnTodayWeather').disabled = disabled;
+document.getElementById('btnTomorrowWeather').disabled = disabled;
+}
+
+비동기 함수 setDateAndWeather(offsetDays) {
+const dateString = getFormattedDate(offsetDays);
+document.getElementById('inputDate').value = dateString;
+onDataChanged();
+
+날씨버튼이 비활성화되어 있습니다(true);
+setStatusMsg('weatherStatusMsg', '⏳ 경기도 광명시 날씨를 불러오는 중입니다...', 'loading');
+
+노력하다 {
+const url = ` https://api.open-meteo.com/v1/forecast?latitude=${GWANGMYEONG_LAT}&longitude=${GWANGMYEONG_LON}&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul` ;
+const res = await fetch(url);
+if (!res.ok) throw new Error('API 응답 오류: ' + res.status);
+const data = await res.json();
+
+const code = data.daily.weathercode[offsetDays];
+const tmax = Math.round(data.daily.temperature_2m_max[offsetDays]);
+const tmin = Math.round(data.daily.temperature_2m_min[offsetDays]);
+
+document.getElementById('inputWeather').value = mapWeatherCode(code);
+document.getElementById('inputHighest').value = tmax + '°';
+document.getElementById('inputLowest').value = tmin + '°';
+onDataChanged();
+
+const now = new Date();
+const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2자리', minute: '2자리' });
+setStatusMsg('weatherStatusMsg', `✅ 날씨가 좋지 않을 것 같군요. (${timeStr} 기준, Open-Meteo)`, 'ok');
+} catch (e) {
+setStatusMsg('weatherStatusMsg', '⚠️ 날씨 자동 감시 실패 (인터넷 연결 확인). 날씨/기온을 직접 입력해주세요.', 'error');
+} 마지막으로 {
+날씨버튼이 비활성화되어 있습니다(false);
+}
+}
+
+함수 resetDefaults() {
+document.getElementById('inputDate').value = "9월 16일";
+document.getElementById('inputWeather').value = "맑음";
+document.getElementById('inputHighest').value = "28°";
+document.getElementById('inputLowest').value = "16°";
+document.getElementById('inputUniform').value = "원복";
+document.getElementById('inputSupplies').value = "없음";
+document.getElementById('inputBreakfast').value = "요거트, 과일, 육전, 칼빵";
+document.getElementById('inputEtc').value = "없음";
+setStatusMsg('weatherStatusMsg', '', '');
+onDataChanged();
+}
+
+async 함수 downloadAsPNG() {
+const btn = document.getElementById('btnDownload');
+버튼 비활성화 = true;
+setStatusMsg('downloadStatusMsg', '⏳ 이미지를 생성하는 중입니다...', 'loading');
+
+노력하다 {
+문서에 글꼴이 있고 문서에 글꼴이 준비되면 {
+document.fonts.ready를 기다립니다.
+}
+
+const target = document.getElementById('einkDisplay');
+
+const canvas = await html2canvas(target, {
+너비: 800,
+높이: 480,
+척도: 1,
+배경색: '#ffffff',
+useCORS: true,
+allowTaint: true,
+로깅: false
+});
+
+const dataUrl = canvas.toDataURL('image/png');
+const dateClean = document.getElementById('dispDate').innerText.replace(/\s+/g, '_');
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+만약 (iOS라면) {
+const win = window.open();
+win.document.write(`
+<html>
+<head><title>공지 이미지 저장</title></head>
+<body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;">
+<p style="color:#fff;font-size:16px;margin:16px;text-align:center;">
+⬇️ 이미지를 <b>길게 하단</b> "사진에 저장"을 선택하세요 </p>
+<img src="${dataUrl}" style="max-width:95%;border:2px solid #fff;" />
+</body>
+</html>
+`);
+} 또 다른 {
+const link = document.createElement('a');
+link.download = `eink_notice_${dateClean}_800x480.png`;
+링크.href = dataUrl;
+링크.클릭();
+}
+
+setStatusMsg('downloadStatusMsg', '✅ 이미지 생성하기 ●', 'ok');
+} catch (e) {
+콘솔.오류(e);
+setStatusMsg('downloadStatusMsg', '⚠️ 이미지 생성 실패: ' + e.message, 'error');
+} 마지막으로 {
+버튼 비활성화 = false;
+}
+}
+
+창문.{
+loadFromStorage();
+updateDisplay();
+};
+</script>
+</body>
+</html>
